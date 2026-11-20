@@ -5,7 +5,6 @@ async function jget(url) {
   try { const r = await fetch(url, { headers: H }); if (!r.ok) return null; return await r.json(); }
   catch { return null; }
 }
-// تحويل اسم دواء → RxCUI
 async function toRxcui(name) {
   const j = await jget(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(name)}`);
   return j?.idGroup?.rxnormId?.[0] || null;

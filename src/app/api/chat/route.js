@@ -7,22 +7,20 @@ export const runtime = "nodejs";
 const PATIENT_SYS = `أنت مساعد DR/ Mosab Badr الصحي للمريض.
 - ردود قصيرة (5 نقاط كحد أقصى) بلغة يومية بسيطة.
 - ممنوع ذكر جرعات أو أسماء تجارية محددة.
-- ابدأ بسطر طمأنة ثم النقاط، وادفع لمراجعة الطبيب عند الحاجة.
-- اعتمد على المصادر المرفقة فقط، وإن غابت قل "استشر طبيبك" ولا تخترع.`;
+- ابدأ بسطر طمأنة ثم النقاط، وادفع لمراجعة الطبيب عند الحاجة.`;
 
 const PRO_SYS = `أنت مساعد سريري للأطباء والصيادلة.
 - اذكر الجرعات والتداخلات فقط إن وردت نصاً في المصادر مع ذكر المصدر.
-- لا تقطع بتشخيص نهائي، صف الاحتمالات.
-- بالعربية مع إبقاء المصطلحات الإنجليزية.`;
+- لا تقطع بتشخيص نهائي، صف الاحتمالات.`;
 
 function detectRedFlags(text) {
   const t = (text || "").toLowerCase();
   const rules = [
-    [["الم في الصدر","الم صدر","ألم صدر","ضغط في الصدر","chest pain"], "قد يكون مشكلة قلبية - اتصل بالإسعاف فوراً"],
-    [["ضيق تنفس","صعوبة في التنفس","shortness of breath"], "إن كان شديداً أو مفاجئاً توجه للطوارئ الآن"],
-    [["شلل","تنميل نصف","تلعثم","انحراف الفم","ضعف مفاجئ","stroke"], "علامات قد تخص الجلطة - الطوارئ فوراً"],
-    [["نزيف","دم في القيء","دم في البراز","براز أسود"], "نزيف محتمل - طوارئ فوراً"],
-    [["فقدان الوعي","إغماء","تشنج","seizure"], "طوارئ فوراً"],
+    [["الم في الصدر","الم صدر","ضغط في الصدر"], "قد يكون مشكلة قلبية - اتصل بالإسعاف فوراً"],
+    [["ضيق تنفس","صعوبة في التنفس"], "إن كان شديداً توجه للطوارئ الآن"],
+    [["شلل","تنميل نصف","تلعثم"], "علامات قد تخص الجلطة - الطوارئ فوراً"],
+    [["نزيف","دم في القيء","براز أسود"], "نزيف محتمل - طوارئ فوراً"],
+    [["فقدان الوعي","إغماء","تشنج"], "طوارئ فوراً"],
   ];
   return rules.filter((r) => r[0].some((k) => t.includes(k))).map((r) => r[1]);
 }
@@ -42,12 +40,13 @@ export async function POST(req) {
     }
     if (!message) return NextResponse.json({ reply: "اكتب سؤالك أولاً", sources: [] });
 
+    // فحص الطوارئ أولاً
     const redFlags = detectRedFlags(message);
     if (redFlags.length > 0) {
       return NextResponse.json({
-        reply: "🚨 بناءً على وصفك توجد علامات تستدقي تقييماً عاجلاً الآن:\n\n" +
+        reply: "🚨 بناءً على وصفك توجد علامات تستدقي تقييماً عاجلاً:\n\n" +
           redFlags.map((r) => "- " + r).join("\n") +
-          "\n\nلا تنتظر - توجه لأقرب طوارئ أو اتصل بالإسعاف.",
+          "\n\nلا تنتظر - توجه لأقرب طوارئ.",
         sources: [], red_flags: redFlags,
       });
     }
@@ -64,9 +63,9 @@ export async function POST(req) {
         pubmed(searchTerm, 3).catch(() => []),
       ]);
       if (rx?.rxcui) { contextText += `\nRxNorm: ${rx.name} (RxCUI ${rx.rxcui})\n`; sources.push({ title: "RxNorm (NLM)", url: rx.url }); }
+      // ✅ الإصلاح هنا: استخدام المتغير الصحيح fda بدلاً من fdaData
       if (fda) {
         contextText += `\nFDA label for ${fda.brand || fda.generic}:\n`;
-        // ✅ الإصلاح: المتغير الصحيح هو fda وليس fdaData
         for (const [k, v] of Object.entries(fda.sections || {})) if (v) contextText += `${k}: ${v}\n`;
         sources.push({ title: "openFDA", url: fda.url });
       }
@@ -82,7 +81,7 @@ export async function POST(req) {
       : raw;
     return NextResponse.json({ reply, sources, red_flags: [] });
   } catch (e) {
-    console.error("=== /api/chat ERROR ===", e); // ← سيظهر في Vercel Logs
+    console.error("=== /api/chat ERROR ===", e);
     return NextResponse.json({ reply: "حدث خطأ غير متوقع.", sources: [], red_flags: [] });
   }
 }

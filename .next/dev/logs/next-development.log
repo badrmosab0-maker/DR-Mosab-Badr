@@ -1,4 +1,4 @@
-{"timestamp":"00:00:07.050","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:24.036","source":"Server","level":"LOG","message":"○ Compiling /page ..."}
-{"timestamp":"00:00:38.433","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
-{"timestamp":"00:00:50.484","source":"Server","level":"LOG","message":"○ Compiling /patient/page ..."}
+{"timestamp":"00:00:09.375","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:23.380","source":"Server","level":"LOG","message":"○ Compiling /page ..."}
+{"timestamp":"00:00:47.872","source":"Browser","level":"INFO","message":"Download the React DevTools for a better development experience: https://react.dev/link/react-devtools"}
+{"timestamp":"00:01:42.930","source":"Server","level":"LOG","message":"○ Compiling /api/chat/route ..."}
